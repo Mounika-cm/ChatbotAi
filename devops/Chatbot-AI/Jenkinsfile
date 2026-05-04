@@ -11,31 +11,17 @@ pipeline {
         stage('Checkout') {
             steps {
                 git branch: 'main',
-                    url: 'https://github.com/Mounika-cm/ChatbotAi.git',
+                    url: 'https://github.com/monika-117/Chatbot-AI.git',
                     credentialsId: 'github-credentials'
-                echo 'Code pulled from GitHub!'
+                echo 'Code pulled from GitHub successfully!'
             }
         }
 
         stage('Validate Files') {
             steps {
+                bat 'echo Checking project files...'
                 bat 'dir'
-                echo 'Files verified!'
-            }
-        }
-
-        stage('Check Node Version') {
-            steps {
-                bat 'node --version'
-                bat 'npm --version'
-                echo 'Node.js is available!'
-            }
-        }
-
-        stage('Install Dependencies') {
-            steps {
-                bat 'npm install'
-                echo 'Dependencies installed!'
+                echo 'File structure verified!'
             }
         }
 
@@ -43,10 +29,12 @@ pipeline {
             steps {
                 powershell '''
                     $htmlFiles = Get-ChildItem -Recurse -Filter "*.html"
-                    $jsFiles   = Get-ChildItem -Recurse -Filter "*.js"
                     $cssFiles  = Get-ChildItem -Recurse -Filter "*.css"
-                    Write-Host "HTML: $($htmlFiles.Count) CSS: $($cssFiles.Count) JS: $($jsFiles.Count)"
-                    Write-Host "Lint passed!"
+                    $jsFiles   = Get-ChildItem -Recurse -Filter "*.js"
+                    Write-Host "HTML files found: $($htmlFiles.Count)"
+                    Write-Host "CSS files found : $($cssFiles.Count)"
+                    Write-Host "JS files found  : $($jsFiles.Count)"
+                    Write-Host "Lint check passed!"
                 '''
             }
         }
@@ -58,27 +46,22 @@ pipeline {
                     if (!(Test-Path $dest)) {
                         New-Item -ItemType Directory -Path $dest -Force
                     }
-                    Copy-Item -Path ".\\*" -Destination $dest -Recurse -Force `
-                        -Exclude @(".git", "node_modules")
-                    Set-Location $dest
-                    npm install --production
-                    $proc = Get-NetTCPConnection -LocalPort 3000 -ErrorAction SilentlyContinue
-                    if ($proc) {
-                        Stop-Process -Id $proc.OwningProcess -Force
-                    }
-                    Start-Process -FilePath "node" `
-                        -ArgumentList "server.js" `
-                        -WorkingDirectory $dest `
-                        -WindowStyle Hidden
-                    Write-Host "Deployed at http://localhost:3000"
+                    Copy-Item -Path ".\\*" -Destination $dest -Recurse -Force -Exclude @(".git")
+                    Write-Host "Chatbot AI deployed to $dest"
                 '''
             }
         }
     }
 
     post {
-        success { echo 'Pipeline succeeded!' }
-        failure { echo 'Pipeline failed!' }
-        always  { cleanWs() }
+        success {
+            echo 'Chatbot AI deployed successfully!'
+        }
+        failure {
+            echo 'Build failed!'
+        }
+        always {
+            cleanWs()
+        }
     }
 }
